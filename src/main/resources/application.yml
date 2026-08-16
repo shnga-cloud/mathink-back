@@ -1,0 +1,23 @@
+server:
+  port: 8080
+#TODO 密码硬编码
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/mathink?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 185188
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.mathink.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+#TODO 密钥硬编码
+# JWT 配置
+jwt:
+  # 密钥(至少32字符)
+  secret: mathink-production-secret-key-2026-change-this
+  # 过期时间(毫秒): 6小时
+  expiration: 21600000
