@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mathink.mapper.UserStatsMapper">
+
+    <!-- 根据用户ID查询统计 -->
+    <select id="findByUserId" parameterType="Long" resultType="com.mathink.entity.UserStats">
+        SELECT id, user_id, total_count, correct_count, wrong_count, last_recognize_at, created_at, updated_at
+        FROM user_stats
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 新增用户统计 -->
+    <insert id="insert" parameterType="com.mathink.entity.UserStats" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_stats (user_id, total_count, correct_count, wrong_count, last_recognize_at, created_at, updated_at)
+        VALUES (#{userId}, #{totalCount}, #{correctCount}, #{wrongCount}, #{lastRecognizeAt}, NOW(), NOW())
+    </insert>
+
+    <!-- 更新用户统计 -->
+    <update id="update" parameterType="com.mathink.entity.UserStats">
+        UPDATE user_stats
+        SET total_count = #{totalCount},
+            correct_count = #{correctCount},
+            wrong_count = #{wrongCount},
+            last_recognize_at = #{lastRecognizeAt},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 累加识别次数 -->
+    <update id="incrementTotal" parameterType="Long">
+        UPDATE user_stats
+        SET total_count = total_count + 1,
+            last_recognize_at = NOW(),
+            updated_at = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 累加正确次数 -->
+    <update id="incrementCorrect" parameterType="Long">
+        UPDATE user_stats
+        SET correct_count = correct_count + 1,
+            updated_at = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 累加错误次数 -->
+    <update id="incrementWrong" parameterType="Long">
+        UPDATE user_stats
+        SET wrong_count = wrong_count + 1,
+            updated_at = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+</mapper>

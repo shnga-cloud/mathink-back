@@ -1,6 +1,7 @@
 package com.mathink.service.impl;
 
 import com.mathink.dto.LoginDTO;
+import com.mathink.dto.RegisterDTO;
 import com.mathink.entity.User;
 import com.mathink.exception.BusinessException;
 import com.mathink.mapper.UserMapper;
@@ -8,6 +9,7 @@ import com.mathink.service.UserService;
 import com.mathink.util.JwtUtil;
 import com.mathink.util.PasswordUtil;
 import com.mathink.vo.LoginVO;
+import com.mathink.vo.RegisterVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,6 +47,31 @@ public class UserServiceImpl implements UserService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .token(token)
+                .build();
+    }
+
+    @Override
+    public RegisterVO register(RegisterDTO registerDTO) {
+        // 1. 检查用户名是否已存在
+        User existUser = userMapper.findByUsername(registerDTO.getUsername());
+        if (existUser != null) {
+            throw new BusinessException("用户名已存在");
+        }
+
+        // 2. BCrypt 加密密码
+        String encodedPassword = PasswordUtil.encode(registerDTO.getPassword());
+
+        // 3. 构建用户实体并插入
+        User user = new User();
+        user.setUsername(registerDTO.getUsername());
+        user.setPassword(encodedPassword);
+        user.setEmail(registerDTO.getEmail());
+        userMapper.insert(user);
+
+        // 4. 返回注册结果
+        return RegisterVO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
                 .build();
     }
 

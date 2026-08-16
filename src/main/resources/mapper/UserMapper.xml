@@ -9,4 +9,10 @@
         WHERE username = #{username}
     </select>
 
+    <!-- 新增用户 -->
+    <insert id="insert" parameterType="com.mathink.entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (username, password, email, created_at, updated_at)
+        VALUES (#{username}, #{password}, #{email}, NOW(), NOW())
+    </insert>
+
 </mapper>
