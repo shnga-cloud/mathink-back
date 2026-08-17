@@ -4,34 +4,34 @@ import com.mathink.entity.History;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * 识别历史 Mapper 接口
  */
 @Mapper
 public interface HistoryMapper {
 
-    /**
-     * 新增历史记录
-     *
-     * @param history 历史记录
-     * @return 影响行数
-     */
     int insert(History history);
 
-    /**
-     * 根据ID查询历史记录
-     *
-     * @param id 历史记录ID
-     * @return 历史记录
-     */
     History findById(@Param("id") Long id);
 
-    /**
-     * 更新反馈
-     *
-     * @param id 历史记录ID
-     * @param feedback 反馈值: 0=未反馈, 1=正确, 2=错误
-     * @return 影响行数
-     */
     int updateFeedback(@Param("id") Long id, @Param("feedback") Integer feedback);
+
+    /**
+     * 分页查询指定用户的历史记录
+     */
+    List<History> findByUserId(@Param("userId") Long userId,
+                               @Param("offset") int offset,
+                               @Param("size") int size);
+
+    /**
+     * 统计指定用户的历史记录数量
+     */
+    Long countByUserId(@Param("userId") Long userId);
+
+    /**
+     * 删除历史记录 (只能删除自己的)
+     */
+    int deleteById(@Param("id") Long id, @Param("userId") Long userId);
 }

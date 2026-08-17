@@ -1,11 +1,14 @@
 package com.mathink.controller;
 
+import com.mathink.common.PageResult;
 import com.mathink.common.Result;
 import com.mathink.dto.FeedbackDTO;
+import com.mathink.dto.HistoryQueryDTO;
 import com.mathink.dto.RecognizeUploadDTO;
 import com.mathink.entity.UserStats;
 import com.mathink.interceptor.JwtInterceptor;
 import com.mathink.service.RecognizeService;
+import com.mathink.vo.HistoryVO;
 import com.mathink.vo.RecognizeVO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -56,5 +59,31 @@ public class RecognizeController {
         Long userId = (Long) request.getAttribute(JwtInterceptor.CURRENT_USER_ID);
         UserStats stats = recognizeService.getUserStats(userId);
         return Result.success(stats);
+    }
+
+    /**
+     * 分页查询当前用户的历史记录
+     */
+    @GetMapping("/history")
+    public Result<PageResult<HistoryVO>> getHistoryList(
+            HttpServletRequest request,
+            @Valid HistoryQueryDTO dto
+    ) {
+        Long userId = (Long) request.getAttribute(JwtInterceptor.CURRENT_USER_ID);
+        PageResult<HistoryVO> pageResult = recognizeService.getHistoryList(userId, dto);
+        return Result.success(pageResult);
+    }
+
+    /**
+     * 删除历史记录
+     */
+    @DeleteMapping("/history/{id}")
+    public Result<Void> deleteHistory(
+            HttpServletRequest request,
+            @PathVariable Long id
+    ) {
+        Long userId = (Long) request.getAttribute(JwtInterceptor.CURRENT_USER_ID);
+        recognizeService.deleteHistory(userId, id);
+        return Result.success();
     }
 }

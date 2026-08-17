@@ -1,8 +1,11 @@
 package com.mathink.service;
 
+import com.mathink.common.PageResult;
 import com.mathink.dto.FeedbackDTO;
+import com.mathink.dto.HistoryQueryDTO;
 import com.mathink.dto.RecognizeUploadDTO;
 import com.mathink.entity.UserStats;
+import com.mathink.vo.HistoryVO;
 import com.mathink.vo.RecognizeVO;
 
 /**
@@ -10,28 +13,19 @@ import com.mathink.vo.RecognizeVO;
  */
 public interface RecognizeService {
 
-    /**
-     * 上传图片识别 LaTeX 公式
-     *
-     * @param userId 用户ID
-     * @param dto    上传请求参数
-     * @return 识别结果
-     */
     RecognizeVO recognizeUpload(Long userId, RecognizeUploadDTO dto);
 
-    /**
-     * 提交反馈
-     *
-     * @param userId 用户ID
-     * @param dto    反馈参数
-     */
     void submitFeedback(Long userId, FeedbackDTO dto);
 
-    /**
-     * 获取用户统计
-     *
-     * @param userId 用户ID
-     * @return 用户统计
-     */
     UserStats getUserStats(Long userId);
+
+    /**
+     * 分页查询当前用户的历史记录
+     */
+    PageResult<HistoryVO> getHistoryList(Long userId, HistoryQueryDTO dto);
+
+    /**
+     * 删除历史记录 (只能删除自己的)
+     */
+    void deleteHistory(Long userId, Long historyId);
 }

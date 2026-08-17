@@ -9,10 +9,31 @@
         WHERE username = #{username}
     </select>
 
+    <!-- 根据邮箱查询用户 -->
+    <select id="findByEmail" parameterType="String" resultType="com.mathink.entity.User">
+        SELECT id, username, password, email, created_at, updated_at
+        FROM user
+        WHERE email = #{email}
+    </select>
+
     <!-- 新增用户 -->
     <insert id="insert" parameterType="com.mathink.entity.User" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO user (username, password, email, created_at, updated_at)
         VALUES (#{username}, #{password}, #{email}, NOW(), NOW())
     </insert>
+
+    <!-- 根据ID查询用户 -->
+    <select id="findById" parameterType="Long" resultType="com.mathink.entity.User">
+        SELECT id, username, password, email, created_at, updated_at
+        FROM user
+        WHERE id = #{id}
+    </select>
+
+    <!-- 更新邮箱 -->
+    <update id="updateEmail">
+        UPDATE user
+        SET email = #{email}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
 
 </mapper>

@@ -4,7 +4,9 @@ import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.mathink.common.PageResult;
 import com.mathink.dto.FeedbackDTO;
+import com.mathink.dto.HistoryQueryDTO;
 import com.mathink.dto.RecognizeUploadDTO;
 import com.mathink.entity.History;
 import com.mathink.entity.UserStats;
@@ -12,6 +14,7 @@ import com.mathink.exception.BusinessException;
 import com.mathink.mapper.HistoryMapper;
 import com.mathink.mapper.UserStatsMapper;
 import com.mathink.service.RecognizeService;
+import com.mathink.vo.HistoryVO;
 import com.mathink.vo.RecognizeVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +29,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * 识别 Service 实现类
@@ -133,10 +138,56 @@ public class RecognizeServiceImpl implements RecognizeService {
     public UserStats getUserStats(Long userId) {
         UserStats stats = userStatsMapper.findByUserId(userId);
         if (stats == null) {
-            // 如果没有统计记录, 创建默认记录
             stats = createDefaultStats(userId);
         }
         return stats;
+    }
+
+    @Override
+    public PageResult<HistoryVO> getHistoryList(Long userId, HistoryQueryDTO dto) {
+        int page = dto.getPage();
+        int size = dto.getSize();
+        int offset = (page - 1) * size;
+
+        Long total = historyMapper.countByUserId(userId);
+        if (total == null || total == 0) {
+            return new PageResult<>(List.of(), 0L, page, size);
+        }
+
+        List<History> histories = historyMapper.findByUserId(userId, offset, size);
+        List<HistoryVO> list = histories.stream()
+                .map(this::convertToHistoryVO)
+                .collect(Collectors.toList());
+
+        return new PageResult<>(list, total, page, size);
+    }
+
+    @Override
+    @Transactional
+    public void deleteHistory(Long userId, Long historyId) {
+        int rows = historyMapper.deleteById(historyId, userId);
+        if (rows == 0) {
+            History history = historyMapper.findById(historyId);
+            if (history == null) {
+                throw new BusinessException("历史记录不存在");
+            }
+            throw new BusinessException("无权操作此记录");
+        }
+        log.info("删除历史记录成功, userId: {}, historyId: {}", userId, historyId);
+    }
+
+    /**
+     * Entity 转 VO
+     */
+    private HistoryVO convertToHistoryVO(History h) {
+        return HistoryVO.builder()
+                .id(h.getId())
+                .imageUrl(h.getImageUrl())
+                .latexResult(h.getLatexResult())
+                .confidence(h.getConfidence())
+                .feedback(h.getFeedback())
+                .createdAt(h.getCreatedAt())
+                .build();
     }
 
     /**
@@ -207,14 +258,13 @@ public class RecognizeServiceImpl implements RecognizeService {
         try {
             HttpResponse response = HttpRequest.post(url)
                     .form("file", file.getBytes(), file.getOriginalFilename())
-                   .timeout(180000)
                     .execute();
 
             JSONObject json = JSONUtil.parseObj(response.body());
             if (json.getInt("code") == 200) {
                 JSONObject data = json.getJSONObject("data");
                 String latex = data.getStr("latex", "");
-                BigDecimal confidence = data.getBigDecimal("confidence", new BigDecimal("0.95"));
+                BigDecimal confidence = data.getBigDecimal("confidence");
                 return new RecognizeResult(latex, confidence);
             }
 

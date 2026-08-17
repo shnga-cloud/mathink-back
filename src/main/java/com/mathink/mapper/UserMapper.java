@@ -10,19 +10,26 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface UserMapper {
 
-    /**
-     * 根据用户名查询用户
-     *
-     * @param username 用户名
-     * @return 用户信息
-     */
     User findByUsername(@Param("username") String username);
 
     /**
-     * 新增用户
+     * 根据邮箱查询用户
      *
-     * @param user 用户信息
-     * @return 影响行数
+     * @param email 邮箱
+     * @return 用户信息
      */
+    User findByEmail(@Param("email") String email);
+    /**
+
+    /**
+     * 根据ID查询用户
+     */
+    User findById(@Param("id") Long id);
+
     int insert(User user);
+
+    /**
+     * 更新邮箱
+     */
+    int updateEmail(@Param("id") Long id, @Param("email") String email);
 }

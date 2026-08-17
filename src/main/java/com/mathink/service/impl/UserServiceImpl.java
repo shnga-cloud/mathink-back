@@ -1,5 +1,6 @@
 package com.mathink.service.impl;
 
+import com.mathink.dto.BindEmailDTO;
 import com.mathink.dto.LoginDTO;
 import com.mathink.dto.RegisterDTO;
 import com.mathink.entity.User;
@@ -73,6 +74,26 @@ public class UserServiceImpl implements UserService {
                 .id(user.getId())
                 .username(user.getUsername())
                 .build();
+    }
+
+    @Override
+    public void bindEmail(Long userId, BindEmailDTO dto) {
+        // 1. 查询用户是否存在
+        User user = userMapper.findById(userId);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+
+        // 2. 检查邮箱是否已被其他用户绑定
+        User existUser = userMapper.findByEmail(dto.getEmail());
+        if (existUser != null && !existUser.getId().equals(userId)) {
+            throw new BusinessException("该邮箱已被绑定");
+        }
+
+        // 3. 更新邮箱
+        userMapper.updateEmail(userId, dto.getEmail());
+
+        log.info("邮箱绑定成功, userId: {}, email: {}", userId, dto.getEmail());
     }
 
 }

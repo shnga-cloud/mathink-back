@@ -22,4 +22,26 @@
         WHERE id = #{id}
     </update>
 
+    <!-- 分页查询指定用户的历史记录 -->
+    <select id="findByUserId" resultType="com.mathink.entity.History">
+        SELECT id, user_id, image_url, latex_result, confidence, feedback, created_at, updated_at
+        FROM recognition_history
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <!-- 统计指定用户的历史记录数量 -->
+    <select id="countByUserId" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM recognition_history
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 删除历史记录 (只能删除自己的) -->
+    <delete id="deleteById">
+        DELETE FROM recognition_history
+        WHERE id = #{id} AND user_id = #{userId}
+    </delete>
+
 </mapper>
