@@ -31,7 +31,7 @@ public class RecognizeController {
     @PostMapping("/upload")
     public Result<RecognizeVO> recognizeUpload(
             HttpServletRequest request,
-            @Valid RecognizeUploadDTO dto
+            @Valid @RequestBody RecognizeUploadDTO dto
     ) {
         Long userId = (Long) request.getAttribute(JwtInterceptor.CURRENT_USER_ID);
         RecognizeVO result = recognizeService.recognizeUpload(userId, dto);

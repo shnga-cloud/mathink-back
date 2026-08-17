@@ -1,8 +1,7 @@
 package com.mathink.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 上传图片识别请求 DTO
@@ -11,8 +10,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class RecognizeUploadDTO {
 
     /**
-     * 图片文件
+     * 图片 Base64 字符串
      */
-    @NotNull(message = "请上传图片")
-    private MultipartFile file;
+    @NotBlank(message = "请上传图片")
+    private String image;
 }

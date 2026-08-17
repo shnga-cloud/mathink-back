@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -29,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -53,29 +53,22 @@ public class RecognizeServiceImpl implements RecognizeService {
     @Override
     @Transactional
     public RecognizeVO recognizeUpload(Long userId, RecognizeUploadDTO dto) {
-        MultipartFile file = dto.getFile();
+        // 1. 解析 Base64
+        String base64Image = dto.getImage();
+        byte[] imageBytes = parseBase64(base64Image);
 
-        // 1. 校验文件
-        if (file == null || file.isEmpty()) {
-            throw new BusinessException("请上传图片");
-        }
+        log.info("收到图片大小: {} KB", imageBytes.length / 1024);  // 新增这行
 
-        // 校验文件类型
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new BusinessException("只能上传图片文件");
-        }
-
-        // 校验文件大小 (5MB 限制)
-        if (file.getSize() > 5 * 1024 * 1024) {
+        // 校验大小 (5MB 限制)
+        if (imageBytes.length > 5 * 1024 * 1024) {
             throw new BusinessException("图片大小不能超过5MB");
         }
 
         // 2. 保存图片到本地
-        String imageUrl = saveImage(file);
+        String imageUrl = saveImage(imageBytes, base64Image);
 
         // 3. 调用 Python 识别服务
-        RecognizeResult recognizeResult = callPythonService(file);
+        RecognizeResult recognizeResult = callPythonService(base64Image);
         String latex = recognizeResult.getLatex();
         BigDecimal confidence = recognizeResult.getConfidence();
 
@@ -196,7 +189,6 @@ public class RecognizeServiceImpl implements RecognizeService {
     private void incrementUserStats(Long userId) {
         UserStats stats = userStatsMapper.findByUserId(userId);
         if (stats == null) {
-            // 首次识别, 创建统计记录
             stats = createDefaultStats(userId);
         }
         userStatsMapper.incrementTotal(userId);
@@ -219,28 +211,20 @@ public class RecognizeServiceImpl implements RecognizeService {
     /**
      * 保存图片到本地
      */
-    private String saveImage(MultipartFile file) {
+    private String saveImage(byte[] imageBytes, String base64Image) {
         try {
-            // 获取绝对路径
             Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
 
-            // 生成唯一文件名
-            String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename != null && originalFilename.contains(".")
-                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                    : ".png";
+            String extension = getExtensionFromBase64(base64Image);
             String newFilename = UUID.randomUUID().toString() + extension;
 
-            // 使用 Files.write 保存文件 (比 transferTo 更可靠)
             Path filePath = uploadPath.resolve(newFilename);
-            Files.write(filePath, file.getBytes());
+            Files.write(filePath, imageBytes);
 
             log.debug("图片已保存到: {}", filePath);
-
-            // 返回相对访问路径
             return "/uploads/" + newFilename;
 
         } catch (IOException e) {
@@ -250,14 +234,43 @@ public class RecognizeServiceImpl implements RecognizeService {
     }
 
     /**
-     * 调用 Python 微服务进行公式识别
+     * 解析 Base64，支持 data:image/png;base64,xxx 格式
      */
-    private RecognizeResult callPythonService(MultipartFile file) {
+    private byte[] parseBase64(String base64) {
+        try {
+            if (base64.contains(",")) {
+                base64 = base64.substring(base64.indexOf(",") + 1);
+            }
+            return Base64.getDecoder().decode(base64);
+        } catch (Exception e) {
+            throw new BusinessException("图片格式错误");
+        }
+    }
+
+    /**
+     * 从 Base64 头部获取扩展名
+     */
+    private String getExtensionFromBase64(String base64) {
+        if (base64.contains("image/png")) return ".png";
+        if (base64.contains("image/jpeg") || base64.contains("image/jpg")) return ".jpg";
+        if (base64.contains("image/gif")) return ".gif";
+        if (base64.contains("image/webp")) return ".webp";
+        return ".png";
+    }
+
+    /**
+     * 调用 Python 微服务进行公式识别 (Base64 JSON 方式)
+     */
+    private RecognizeResult callPythonService(String base64Image) {
         String url = pythonServiceUrl + "/predict";
 
         try {
+            JSONObject requestBody = new JSONObject();
+            requestBody.set("image", base64Image);
+
             HttpResponse response = HttpRequest.post(url)
-                    .form("file", file.getBytes(), file.getOriginalFilename())
+                    .header("Content-Type", "application/json")
+                    .body(requestBody.toString())
                     .execute();
 
             JSONObject json = JSONUtil.parseObj(response.body());
