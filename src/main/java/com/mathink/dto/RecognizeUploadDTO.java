@@ -14,4 +14,9 @@ public class RecognizeUploadDTO {
      */
     @NotBlank(message = "请上传图片")
     private String image;
+
+    /**
+     * 识别模式: math(数学) 或 chem(化学), 默认 math
+     */
+    private String mode = "math";
 }

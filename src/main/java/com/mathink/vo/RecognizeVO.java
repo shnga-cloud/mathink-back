@@ -22,9 +22,24 @@ public class RecognizeVO {
     private Long id;
 
     /**
-     * 识别出的LaTeX公式
+     * 识别类型: math 或 chem
+     */
+    private String type;
+
+    /**
+     * 数学模式: LaTeX 公式
      */
     private String latex;
+
+    /**
+     * 化学模式: chemfig LaTeX 字符串, 如 \chemfig {...}
+     */
+    private String ssml;
+
+    /**
+     * 化学模式: LaTeX 编译渲染的 SVG 字符串 (透明背景), 直接透传给前端
+     */
+    private String svg;
 
     /**
      * 识别置信度

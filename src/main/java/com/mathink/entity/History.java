@@ -32,9 +32,24 @@ public class History {
     private String imageUrl;
 
     /**
-     * 识别出的LaTeX公式
+     * 识别结果类型: math 或 chem
+     */
+    private String resultType;
+
+    /**
+     * 数学模式: LaTeX 公式
      */
     private String latexResult;
+
+    /**
+     * 化学模式: chemfig LaTeX 字符串, 如 \chemfig {...}
+     */
+    private String ssmlResult;
+
+    /**
+     * 化学模式: LaTeX 编译渲染的 SVG 字符串
+     */
+    private String svgResult;
 
     /**
      * 识别置信度

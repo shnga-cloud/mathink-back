@@ -57,7 +57,7 @@ public class RecognizeServiceImpl implements RecognizeService {
         String base64Image = dto.getImage();
         byte[] imageBytes = parseBase64(base64Image);
 
-        log.info("收到图片大小: {} KB", imageBytes.length / 1024);  // 新增这行
+        log.info("收到图片大小: {} KB, mode: {}", imageBytes.length / 1024, dto.getMode());
 
         // 校验大小 (5MB 限制)
         if (imageBytes.length > 5 * 1024 * 1024) {
@@ -67,29 +67,42 @@ public class RecognizeServiceImpl implements RecognizeService {
         // 2. 保存图片到本地
         String imageUrl = saveImage(imageBytes, base64Image);
 
-        // 3. 调用 Python 识别服务
-        RecognizeResult recognizeResult = callPythonService(base64Image);
-        String latex = recognizeResult.getLatex();
-        BigDecimal confidence = recognizeResult.getConfidence();
+        // 3. 调用 Python 识别服务, 携带 mode 参数
+        RecognizeResult recognizeResult = callPythonService(imageBytes, dto.getMode());
 
         // 4. 保存历史记录
         History history = new History();
         history.setUserId(userId);
         history.setImageUrl(imageUrl);
-        history.setLatexResult(latex);
-        history.setConfidence(confidence);
+        history.setResultType(recognizeResult.getType());
+        history.setLatexResult(recognizeResult.getLatex() != null ? recognizeResult.getLatex() : "");
+        history.setSsmlResult(recognizeResult.getSsml() != null ? recognizeResult.getSsml() : "");
+        history.setSvgResult(recognizeResult.getSvg() != null ? recognizeResult.getSvg() : "");
+        history.setConfidence(recognizeResult.getConfidence());
         historyMapper.insert(history);
 
         // 5. 更新用户统计 (累加识别次数)
         incrementUserStats(userId);
 
-        log.info("图片识别成功, userId: {}, historyId: {}, latex: {}", userId, history.getId(), latex);
+        log.info("图片识别成功, userId: {}, historyId: {}, type: {}", userId, history.getId(), recognizeResult.getType());
 
-        // 6. 返回结果
+        // 6. 根据 type 返回不同的 VO
+        if ("chem".equals(recognizeResult.getType())) {
+            return RecognizeVO.builder()
+                    .id(history.getId())
+                    .type("chem")
+                    .ssml(recognizeResult.getSsml())
+                    .svg(recognizeResult.getSvg())
+                    .confidence(recognizeResult.getConfidence())
+                    .imageUrl(imageUrl)
+                    .build();
+        }
+
         return RecognizeVO.builder()
                 .id(history.getId())
-                .latex(latex)
-                .confidence(confidence)
+                .type("math")
+                .latex(recognizeResult.getLatex())
+                .confidence(recognizeResult.getConfidence())
                 .imageUrl(imageUrl)
                 .build();
     }
@@ -176,7 +189,10 @@ public class RecognizeServiceImpl implements RecognizeService {
         return HistoryVO.builder()
                 .id(h.getId())
                 .imageUrl(h.getImageUrl())
+                .resultType(h.getResultType())
                 .latexResult(h.getLatexResult())
+                .ssmlResult(h.getSsmlResult())
+                .svgResult(h.getSvgResult())
                 .confidence(h.getConfidence())
                 .feedback(h.getFeedback())
                 .createdAt(h.getCreatedAt())
@@ -259,33 +275,49 @@ public class RecognizeServiceImpl implements RecognizeService {
     }
 
     /**
-     * 调用 Python 微服务进行公式识别 (Base64 JSON 方式)
+     * 调用 Python 微服务进行公式识别 (Multipart 文件上传方式, 携带 mode 参数)
      */
-    private RecognizeResult callPythonService(String base64Image) {
+    private RecognizeResult callPythonService(byte[] imageBytes, String mode) {
         String url = pythonServiceUrl + "/predict";
+        log.info("准备调用 Python 识别服务, url: {}, mode: {}, 图片大小: {} bytes", url, mode, imageBytes.length);
 
         try {
-            JSONObject requestBody = new JSONObject();
-            requestBody.set("image", base64Image);
-
             HttpResponse response = HttpRequest.post(url)
-                    .header("Content-Type", "application/json")
-                    .body(requestBody.toString())
+                    .form("file", imageBytes, "image.png")
+                    .form("mode", mode == null ? "math" : mode)
                     .execute();
 
-            JSONObject json = JSONUtil.parseObj(response.body());
-            if (json.getInt("code") == 200) {
+            int status = response.getStatus();
+            String body = response.body();
+            log.info("Python 服务响应, status: {}, body: {}", status, body);
+
+            if (!response.isOk()) {
+                log.error("Python 服务返回非成功状态, status: {}, body: {}", status, body);
+                throw new BusinessException("识别服务暂不可用，请稍后重试");
+            }
+
+            JSONObject json = JSONUtil.parseObj(body);
+            Integer code = json.getInt("code");
+            if (code != null && code == 200) {
                 JSONObject data = json.getJSONObject("data");
-                String latex = data.getStr("latex", "");
+                String type = data.getStr("type", "math");
                 BigDecimal confidence = data.getBigDecimal("confidence");
-                return new RecognizeResult(latex, confidence);
+
+                if ("chem".equals(type)) {
+                    String ssml = data.getStr("ssml", "");
+                    String svg = data.getStr("svg", "");
+                    return new RecognizeResult(type, null, ssml, svg, confidence);
+                }
+
+                String latex = data.getStr("latex", "");
+                return new RecognizeResult(type, latex, null, null, confidence);
             }
 
             throw new BusinessException(json.getStr("message", "识别失败"));
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("调用 Python 识别服务失败", e);
+            log.error("调用 Python 识别服务失败, url: {}", url, e);
             throw new BusinessException("识别服务暂不可用，请稍后重试");
         }
     }
@@ -295,7 +327,10 @@ public class RecognizeServiceImpl implements RecognizeService {
      */
     @lombok.Data
     private static class RecognizeResult {
+        private final String type;
         private final String latex;
+        private final String ssml;
+        private final String svg;
         private final BigDecimal confidence;
     }
 }
