@@ -32,9 +32,9 @@ public class RecognizeVO {
     private String latex;
 
     /**
-     * 化学模式: chemfig LaTeX 字符串, 如 \chemfig {...}
+     * 化学模式: SMILES 字符串
      */
-    private String ssml;
+    private String smiles;
 
     /**
      * 化学模式: LaTeX 编译渲染的 SVG 字符串 (透明背景), 直接透传给前端

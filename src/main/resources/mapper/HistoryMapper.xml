@@ -4,13 +4,13 @@
 
     <!-- 新增历史记录 -->
     <insert id="insert" parameterType="com.mathink.entity.History" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO recognition_history (user_id, image_url, result_type, latex_result, ssml_result, svg_result, confidence, feedback, created_at, updated_at)
-        VALUES (#{userId}, #{imageUrl}, #{resultType}, #{latexResult}, #{ssmlResult}, #{svgResult}, #{confidence}, 0, NOW(), NOW())
+        INSERT INTO recognition_history (user_id, image_url, result_type, latex_result, smiles_result, svg_result, confidence, feedback, created_at, updated_at)
+        VALUES (#{userId}, #{imageUrl}, #{resultType}, #{latexResult}, #{smilesResult}, #{svgResult}, #{confidence}, 0, NOW(), NOW())
     </insert>
 
     <!-- 根据ID查询历史记录 -->
     <select id="findById" parameterType="Long" resultType="com.mathink.entity.History">
-        SELECT id, user_id, image_url, result_type, latex_result, ssml_result, svg_result, confidence, feedback, created_at, updated_at
+        SELECT id, user_id, image_url, result_type, latex_result, smiles_result, svg_result, confidence, feedback, created_at, updated_at
         FROM recognition_history
         WHERE id = #{id}
     </select>
@@ -24,7 +24,7 @@
 
     <!-- 分页查询指定用户的历史记录 -->
     <select id="findByUserId" resultType="com.mathink.entity.History">
-        SELECT id, user_id, image_url, result_type, latex_result, ssml_result, svg_result, confidence, feedback, created_at, updated_at
+        SELECT id, user_id, image_url, result_type, latex_result, smiles_result, svg_result, confidence, feedback, created_at, updated_at
         FROM recognition_history
         WHERE user_id = #{userId}
         ORDER BY created_at DESC

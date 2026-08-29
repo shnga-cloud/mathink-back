@@ -42,9 +42,9 @@ public class History {
     private String latexResult;
 
     /**
-     * 化学模式: chemfig LaTeX 字符串, 如 \chemfig {...}
+     * 化学模式: SMILES 字符串
      */
-    private String ssmlResult;
+    private String smilesResult;
 
     /**
      * 化学模式: LaTeX 编译渲染的 SVG 字符串

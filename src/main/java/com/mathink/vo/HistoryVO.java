@@ -21,7 +21,7 @@ public class HistoryVO {
     private String imageUrl;
     private String resultType;
     private String latexResult;
-    private String ssmlResult;
+    private String smilesResult;
     private String svgResult;
     private BigDecimal confidence;
     private Integer feedback;

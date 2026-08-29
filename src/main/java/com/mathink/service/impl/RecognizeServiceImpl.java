@@ -76,7 +76,7 @@ public class RecognizeServiceImpl implements RecognizeService {
         history.setImageUrl(imageUrl);
         history.setResultType(recognizeResult.getType());
         history.setLatexResult(recognizeResult.getLatex() != null ? recognizeResult.getLatex() : "");
-        history.setSsmlResult(recognizeResult.getSsml() != null ? recognizeResult.getSsml() : "");
+        history.setSmilesResult(recognizeResult.getSmiles() != null ? recognizeResult.getSmiles() : "");
         history.setSvgResult(recognizeResult.getSvg() != null ? recognizeResult.getSvg() : "");
         history.setConfidence(recognizeResult.getConfidence());
         historyMapper.insert(history);
@@ -91,7 +91,7 @@ public class RecognizeServiceImpl implements RecognizeService {
             return RecognizeVO.builder()
                     .id(history.getId())
                     .type("chem")
-                    .ssml(recognizeResult.getSsml())
+                    .smiles(recognizeResult.getSmiles())
                     .svg(recognizeResult.getSvg())
                     .confidence(recognizeResult.getConfidence())
                     .imageUrl(imageUrl)
@@ -191,7 +191,7 @@ public class RecognizeServiceImpl implements RecognizeService {
                 .imageUrl(h.getImageUrl())
                 .resultType(h.getResultType())
                 .latexResult(h.getLatexResult())
-                .ssmlResult(h.getSsmlResult())
+                .smilesResult(h.getSmilesResult())
                 .svgResult(h.getSvgResult())
                 .confidence(h.getConfidence())
                 .feedback(h.getFeedback())
@@ -304,9 +304,9 @@ public class RecognizeServiceImpl implements RecognizeService {
                 BigDecimal confidence = data.getBigDecimal("confidence");
 
                 if ("chem".equals(type)) {
-                    String ssml = data.getStr("ssml", "");
+                    String smiles = data.getStr("smiles", "");
                     String svg = data.getStr("svg", "");
-                    return new RecognizeResult(type, null, ssml, svg, confidence);
+                    return new RecognizeResult(type, null, smiles, svg, confidence);
                 }
 
                 String latex = data.getStr("latex", "");
@@ -329,7 +329,7 @@ public class RecognizeServiceImpl implements RecognizeService {
     private static class RecognizeResult {
         private final String type;
         private final String latex;
-        private final String ssml;
+        private final String smiles;
         private final String svg;
         private final BigDecimal confidence;
     }
