@@ -34,7 +34,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(true)
                 .maxAge(3600);
     }
 
@@ -50,6 +49,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addResourceLocations(location);
     }
 
+    /**
+     * 配置全局拦截器
+     * 对所有请求进行 JWT 验证
+     */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtInterceptor)

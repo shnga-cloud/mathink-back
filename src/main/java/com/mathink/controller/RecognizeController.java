@@ -6,11 +6,9 @@ import com.mathink.dto.FeedbackDTO;
 import com.mathink.dto.HistoryQueryDTO;
 import com.mathink.dto.RecognizeUploadDTO;
 import com.mathink.entity.UserStats;
-import com.mathink.interceptor.JwtInterceptor;
 import com.mathink.service.RecognizeService;
 import com.mathink.vo.HistoryVO;
 import com.mathink.vo.RecognizeVO;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -29,12 +27,8 @@ public class RecognizeController {
      * 上传图片识别 LaTeX 公式
      */
     @PostMapping("/upload")
-    public Result<RecognizeVO> recognizeUpload(
-            HttpServletRequest request,
-            @Valid @RequestBody RecognizeUploadDTO dto
-    ) {
-        Long userId = (Long) request.getAttribute(JwtInterceptor.CURRENT_USER_ID);
-        RecognizeVO result = recognizeService.recognizeUpload(userId, dto);
+    public Result<RecognizeVO> recognizeUpload(@Valid @RequestBody RecognizeUploadDTO dto) {
+        RecognizeVO result = recognizeService.recognizeUpload(dto);
         return Result.success(result);
     }
 
@@ -42,12 +36,8 @@ public class RecognizeController {
      * 提交反馈 (标记正确/错误)
      */
     @PostMapping("/feedback")
-    public Result<Void> submitFeedback(
-            HttpServletRequest request,
-            @Valid @RequestBody FeedbackDTO dto
-    ) {
-        Long userId = (Long) request.getAttribute(JwtInterceptor.CURRENT_USER_ID);
-        recognizeService.submitFeedback(userId, dto);
+    public Result<Void> submitFeedback(@Valid @RequestBody FeedbackDTO dto) {
+        recognizeService.submitFeedback(dto);
         return Result.success();
     }
 
@@ -55,9 +45,8 @@ public class RecognizeController {
      * 获取用户统计
      */
     @GetMapping("/stats")
-    public Result<UserStats> getUserStats(HttpServletRequest request) {
-        Long userId = (Long) request.getAttribute(JwtInterceptor.CURRENT_USER_ID);
-        UserStats stats = recognizeService.getUserStats(userId);
+    public Result<UserStats> getUserStats() {
+        UserStats stats = recognizeService.getUserStats();
         return Result.success(stats);
     }
 
@@ -65,12 +54,8 @@ public class RecognizeController {
      * 分页查询当前用户的历史记录
      */
     @GetMapping("/history")
-    public Result<PageResult<HistoryVO>> getHistoryList(
-            HttpServletRequest request,
-            @Valid HistoryQueryDTO dto
-    ) {
-        Long userId = (Long) request.getAttribute(JwtInterceptor.CURRENT_USER_ID);
-        PageResult<HistoryVO> pageResult = recognizeService.getHistoryList(userId, dto);
+    public Result<PageResult<HistoryVO>> getHistoryList(@Valid HistoryQueryDTO dto) {
+        PageResult<HistoryVO> pageResult = recognizeService.getHistoryList(dto);
         return Result.success(pageResult);
     }
 
@@ -78,12 +63,8 @@ public class RecognizeController {
      * 删除历史记录
      */
     @DeleteMapping("/history/{id}")
-    public Result<Void> deleteHistory(
-            HttpServletRequest request,
-            @PathVariable Long id
-    ) {
-        Long userId = (Long) request.getAttribute(JwtInterceptor.CURRENT_USER_ID);
-        recognizeService.deleteHistory(userId, id);
+    public Result<Void> deleteHistory(@PathVariable Long id) {
+        recognizeService.deleteHistory(id);
         return Result.success();
     }
 }

@@ -4,11 +4,8 @@ import com.mathink.common.Result;
 import com.mathink.dto.BindEmailDTO;
 import com.mathink.dto.LoginDTO;
 import com.mathink.dto.RegisterDTO;
-import com.mathink.interceptor.JwtInterceptor;
 import com.mathink.service.UserService;
 import com.mathink.vo.LoginVO;
-import com.mathink.vo.RegisterVO;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -27,21 +24,14 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public Result<RegisterVO> register(@Valid @RequestBody RegisterDTO registerDTO) {
-        RegisterVO registerVO = userService.register(registerDTO);
-        return Result.success(registerVO);
+    public Result<Void> register(@Valid @RequestBody RegisterDTO registerDTO) {
+        userService.register(registerDTO);
+        return Result.success();
     }
 
-    /**
-     * 绑定邮箱
-     */
     @PostMapping("/bind-email")
-    public Result<Void> bindEmail(
-            HttpServletRequest request,
-            @Valid @RequestBody BindEmailDTO dto
-    ) {
-        Long userId = (Long) request.getAttribute(JwtInterceptor.CURRENT_USER_ID);
-        userService.bindEmail(userId, dto);
+    public Result<Void> bindEmail(@Valid @RequestBody BindEmailDTO dto) {
+        userService.bindEmail(dto);
         return Result.success();
     }
 }

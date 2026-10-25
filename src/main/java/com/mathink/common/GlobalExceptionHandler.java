@@ -2,10 +2,10 @@ package com.mathink.common;
 
 import com.mathink.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
 /**
  * 全局异常处理器
  * 统一处理 Controller 层抛出的异常,返回标准 Result 格式
@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     public Result<Void> handleBusinessException(BusinessException e) {
-        log.warn("业务异常: {}", e.getMessage());
+        log.error("业务异常: {}", e.getMessage());
         return Result.error(e.getMessage());
     }
 
@@ -38,20 +38,24 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .reduce((a, b) -> a + "; " + b)
                 .orElse("参数校验失败");
-        log.warn("参数校验异常: {}", message);
+        log.error("参数校验异常: {}", message);
         return Result.error(message);
     }
 
     /**
-     * 处理非法参数异常
+     * 处理GET请求参数校验异常
      *
-     * @param e 非法参数异常
+     * @param e 参数绑定异常
      * @return 统一响应结果
      */
-    @ExceptionHandler(IllegalArgumentException.class)
-    public Result<Void> handleIllegalArgumentException(IllegalArgumentException e) {
-        log.warn("参数异常: {}", e.getMessage());
-        return Result.error(e.getMessage());
+    @ExceptionHandler(BindException.class)
+    public Result<Void> handleBindException(BindException e) {
+        String message = e.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .reduce((a, b) -> a + "; " + b)
+                .orElse("参数校验失败");
+        log.error("参数校验异常: {}", message);
+        return Result.error(message);
     }
 
     /**

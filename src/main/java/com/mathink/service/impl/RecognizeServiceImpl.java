@@ -5,6 +5,7 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.mathink.common.PageResult;
+import com.mathink.common.UserContext;
 import com.mathink.dto.FeedbackDTO;
 import com.mathink.dto.HistoryQueryDTO;
 import com.mathink.dto.RecognizeUploadDTO;
@@ -52,7 +53,8 @@ public class RecognizeServiceImpl implements RecognizeService {
 
     @Override
     @Transactional
-    public RecognizeVO recognizeUpload(Long userId, RecognizeUploadDTO dto) {
+    public RecognizeVO recognizeUpload(RecognizeUploadDTO dto) {
+        Long userId = UserContext.getUserId();
         // 1. 解析 Base64
         String base64Image = dto.getImage();
         byte[] imageBytes = parseBase64(base64Image);
@@ -109,7 +111,8 @@ public class RecognizeServiceImpl implements RecognizeService {
 
     @Override
     @Transactional
-    public void submitFeedback(Long userId, FeedbackDTO dto) {
+    public void submitFeedback(FeedbackDTO dto) {
+        Long userId = UserContext.getUserId();
         // 1. 查询历史记录
         History history = historyMapper.findById(dto.getHistoryId());
         if (history == null) {
@@ -141,7 +144,8 @@ public class RecognizeServiceImpl implements RecognizeService {
     }
 
     @Override
-    public UserStats getUserStats(Long userId) {
+    public UserStats getUserStats() {
+        Long userId = UserContext.getUserId();
         UserStats stats = userStatsMapper.findByUserId(userId);
         if (stats == null) {
             stats = createDefaultStats(userId);
@@ -150,7 +154,8 @@ public class RecognizeServiceImpl implements RecognizeService {
     }
 
     @Override
-    public PageResult<HistoryVO> getHistoryList(Long userId, HistoryQueryDTO dto) {
+    public PageResult<HistoryVO> getHistoryList(HistoryQueryDTO dto) {
+        Long userId = UserContext.getUserId();
         int page = dto.getPage();
         int size = dto.getSize();
         int offset = (page - 1) * size;
@@ -170,7 +175,8 @@ public class RecognizeServiceImpl implements RecognizeService {
 
     @Override
     @Transactional
-    public void deleteHistory(Long userId, Long historyId) {
+    public void deleteHistory(Long historyId) {
+        Long userId = UserContext.getUserId();
         int rows = historyMapper.deleteById(historyId, userId);
         if (rows == 0) {
             History history = historyMapper.findById(historyId);
@@ -235,7 +241,7 @@ public class RecognizeServiceImpl implements RecognizeService {
             }
 
             String extension = getExtensionFromBase64(base64Image);
-            String newFilename = UUID.randomUUID().toString() + extension;
+            String newFilename = UUID.randomUUID() + extension;
 
             Path filePath = uploadPath.resolve(newFilename);
             Files.write(filePath, imageBytes);

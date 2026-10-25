@@ -13,19 +13,19 @@ import com.mathink.vo.RecognizeVO;
  */
 public interface RecognizeService {
 
-    RecognizeVO recognizeUpload(Long userId, RecognizeUploadDTO dto);
+    RecognizeVO recognizeUpload(RecognizeUploadDTO dto);
 
-    void submitFeedback(Long userId, FeedbackDTO dto);
+    void submitFeedback(FeedbackDTO dto);
 
-    UserStats getUserStats(Long userId);
+    UserStats getUserStats();
 
     /**
      * 分页查询当前用户的历史记录
      */
-    PageResult<HistoryVO> getHistoryList(Long userId, HistoryQueryDTO dto);
+    PageResult<HistoryVO> getHistoryList(HistoryQueryDTO dto);
 
     /**
      * 删除历史记录 (只能删除自己的)
      */
-    void deleteHistory(Long userId, Long historyId);
+    void deleteHistory(Long historyId);
 }

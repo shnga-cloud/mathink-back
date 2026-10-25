@@ -12,24 +12,11 @@ public interface UserMapper {
 
     User findByUsername(@Param("username") String username);
 
-    /**
-     * 根据邮箱查询用户
-     *
-     * @param email 邮箱
-     * @return 用户信息
-     */
-    User findByEmail(@Param("email") String email);
-    /**
-
-    /**
-     * 根据ID查询用户
-     */
-    User findById(@Param("id") Long id);
-
     int insert(User user);
 
-    /**
-     * 更新邮箱
-     */
+    User findById(@Param("id") Long id);
+
+    User findByEmail(@Param("email") String email);
+
     int updateEmail(@Param("id") Long id, @Param("email") String email);
 }

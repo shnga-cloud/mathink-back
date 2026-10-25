@@ -1,5 +1,6 @@
 package com.mathink.interceptor;
 
+import com.mathink.common.UserContext;
 import com.mathink.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,8 +13,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class JwtInterceptor implements HandlerInterceptor {
 
     private final JwtUtil jwtUtil;
-
-    public static final String CURRENT_USER_ID = "currentUserId";
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -30,10 +29,11 @@ public class JwtInterceptor implements HandlerInterceptor {
             response.getWriter().write("{\"code\":401,\"message\":\"未登录\",\"data\":null}");
             return false;
         }
-
+        // TODO 验证 Token 是否有效,如果无效则返回 401
         try {
             Long userId = jwtUtil.getUserId(token);
-            request.setAttribute(CURRENT_USER_ID, userId);
+            String username = jwtUtil.getUsername(token);
+            UserContext.set(userId, username);
             return true;
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -41,5 +41,10 @@ public class JwtInterceptor implements HandlerInterceptor {
             response.getWriter().write("{\"code\":401,\"message\":\"登录已过期\",\"data\":null}");
             return false;
         }
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        UserContext.clear();
     }
 }

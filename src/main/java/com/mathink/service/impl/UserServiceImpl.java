@@ -1,5 +1,6 @@
 package com.mathink.service.impl;
 
+import com.mathink.common.UserContext;
 import com.mathink.dto.BindEmailDTO;
 import com.mathink.dto.LoginDTO;
 import com.mathink.dto.RegisterDTO;
@@ -10,7 +11,6 @@ import com.mathink.service.UserService;
 import com.mathink.util.JwtUtil;
 import com.mathink.util.PasswordUtil;
 import com.mathink.vo.LoginVO;
-import com.mathink.vo.RegisterVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,7 +52,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public RegisterVO register(RegisterDTO registerDTO) {
+    public void register(RegisterDTO registerDTO) {
         // 1. 检查用户名是否已存在
         User existUser = userMapper.findByUsername(registerDTO.getUsername());
         if (existUser != null) {
@@ -68,16 +68,12 @@ public class UserServiceImpl implements UserService {
         user.setPassword(encodedPassword);
         user.setEmail(registerDTO.getEmail());
         userMapper.insert(user);
-
-        // 4. 返回注册结果
-        return RegisterVO.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .build();
     }
 
     @Override
-    public void bindEmail(Long userId, BindEmailDTO dto) {
+    public void bindEmail(BindEmailDTO dto) {
+        Long userId = UserContext.getUserId();
+
         // 1. 查询用户是否存在
         User user = userMapper.findById(userId);
         if (user == null) {
